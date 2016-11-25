@@ -1,5 +1,5 @@
 #include <iostream>
-#include "ircProto.hpp"
+#include "ircProto.h"
 
 int main(int argc, char **argv){
 

@@ -3,25 +3,24 @@
 #include <string>
 #include <boost/asio.hpp>
 #include <boost/array.hpp>
-#include "connection.hpp"
+#include "connection.h"
 
 using boost::asio::ip::tcp;
 
 connection::connection( char* network, char * port)
-		: query(network, port), resolver(io), iterator(resolver.resolve(query)), socket(io)
-
+		: resolver(io), query(network, port), iterator(resolver.resolve(query)), socket(io)
 {
 
 }
 
-int connection::connect()
+void connection::connect()
 {
 
 	boost::asio::connect(socket, iterator);
-	
+
 }
 
-int connection::disconnect()
+void connection::disconnect()
 {
 
 }

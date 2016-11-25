@@ -13,8 +13,8 @@ class connection
 
 		connection( char *network, char *port);
 		
-		int connect();
-		int disconnect();
+		void connect();
+		void disconnect();
 
 		std::size_t send(std::string &msg);
 		std::size_t send(std::string &&msg);
