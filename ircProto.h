@@ -39,13 +39,13 @@ class ircProto : protected connection{
 		void handle_line(std::string);
 
 		//when a command has been found this function figures out which one and runs the required code
-		void handle_command(std::string&, std::string&, std::string&, std::string&, bool);
+		void handle_command(std::string&, const std::string&, const std::string&, const std::string&, const bool);
 
-		void split(std::string&, std::string&&, std::vector<std::string>&); 
+		void split(std::string&, const std::string&&, std::vector<std::string>&); 
 
-		void sendMsg(std::string&, std::string&);
+		void sendMsg(const std::string&, const std::string&);
 		//overloaded to be able to send messages without it being held in a variable
-		void sendMsg(std::string&&, std::string&);
+		void sendMsg(const std::string&&, const std::string&);
 
 		void pong(std::string&);
 
@@ -53,22 +53,28 @@ class ircProto : protected connection{
 		void registerCon();
 
 		//checks if users host is in authHosts vector
-		bool isAuthenticated(std::string&);
+		bool isAuthed(const std::string&);
+
+		void notAuthed(const std::string&);
+
+		std::string getNickname(const std::string&);
+
+		std::string getNickHostname(const std::string&);
 
 		/*###########################################################################################
 											command functions
 		###########################################################################################*/
 
 		//join a channel
-		void join(std::string &channel);
+		void join(const std::string &channel);
 
 		//leave a channel
-		void part(std::string &channel);
+		void part(const std::string &channel);
 
 		//disconnect the connection
 		void quit();
 
-		void setNick(std::string &nick);
+		void setNick(const std::string &nick);
 		
 };
 

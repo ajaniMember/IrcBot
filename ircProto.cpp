@@ -6,10 +6,9 @@
 
 #include "ircProto.h"
 
-ircProto::ircProto(char * channel, char * port, char * ni) : connection(channel, port), nick(ni), authPass("password1"), commandPrefix('#'){
-
+ircProto::ircProto(char * channel, char * port, char * ni) : connection(channel, port), nick(ni), authPass("password1"), commandPrefix('#')
+{
 	std::cout << "initialized successfully!" << std::endl;
-
 }
 
 /*##################################################################################################################
@@ -146,14 +145,11 @@ void ircProto::handle_line(std::string line)
 
 		if(prefixVector[1] == "PRIVMSG")
 		{
-			std::size_t delimPos = prefixVector[0].find('!');
-			//:ajaniMember!~ajaniMemb@45.55.137.32 PRIVMSG ##gr33nbot :hello
-			//delimPos =  ^ the character being pointed to in the above text
-			//get username
-			fromNickname = prefixVector[0].substr(0, delimPos);
-			//get users host
-			fromNicknameHost = prefixVector[0].substr(delimPos + 1, prefixVector[0].find(" "));
-
+		
+			
+			fromNickname = getNickname(prefixVector[0]);
+			fromNicknameHost = getNickHostname(prefixVector[0]);
+			
 			//if prefixVector[2] is a channel
 			//message to a channel
 			if(prefixVector[2][0] == '#' || prefixVector[2][0] == '&')
@@ -167,11 +163,38 @@ void ircProto::handle_line(std::string line)
 			}
 
 			
-		}//end of MOTD
-		else if(prefixVector[1] == "376")
+		}
+		else if(prefixVector[1] == "JOIN")
 		{
 
-			for(auto i = jChannel.begin(); i != jChannel.end(); i++){
+			//!!!add user to channel vector
+
+		}
+		else if(prefixVector[1] == "PART")
+		{
+
+
+		}
+		else if(prefixVector[1] == "QUIT")
+		{
+			fromNicknameHost = getNickHostname(prefixVector[0]);
+			//!!!if hostname is in authHosts vector remove it :D pretty easy
+
+			for(auto e = authHosts.begin(); e != authHosts.end(); e++){
+
+				if(std::get<1>(*e) == fromNicknameHost)
+				{
+					authHosts.erase(e);
+					break;		
+				}
+			}
+			
+		}
+		//end of MOTD
+		else if(prefixVector[1] == "376")
+		{
+			for(auto i = jChannel.begin(); i != jChannel.end(); i++)
+			{
 
 				join(*i);
 			}
@@ -179,88 +202,17 @@ void ircProto::handle_line(std::string line)
 	}
 }
 
-void ircProto::handle_command(std::string &msg, std::string &fromNickname, std::string &fromNicknameHost, std::string& channelName, bool fromChannel)
+void ircProto::handle_command(std::string &msg, const std::string &fromNickname, const std::string &fromNicknameHost, const std::string& channelName, const bool fromChannel)
 {
-	/*
-		implement a command whitelist for requred commands like quit and join
-		wanted commands:
 
-			reverse polish notation calculator;
-
-			change nickname
-
-			quit
-
-			join
-
-			part
-
-	*/
 	std::vector<std::string> parameters;
 	std::string message;
 	msg.append(" ");
 
 	split(msg, " ", parameters);
 
-	std::cout << "parameters :" << std::endl;
-	for(auto e = parameters.begin(); e != parameters.end(); e++)
-	{
-
-		std::cout << '\t' << *e << std::endl;
-	}
-
-	//quit the connection
-	if(parameters[0] == "!quit")
-	{
-		quit();
-	}
-	//join a channel
-	else if(parameters[0] == "!join")
-	{
-		if(parameters.size() >= 2){
-
-			join(parameters[1]);
-
-		} else{
-
-			message = "No channel provided";
-			sendMsg(message, fromNickname);
-		}
-		
-	}
-	//part from channel
-	else if(parameters[0] == "!part")
-	{
-
-		if(fromChannel){
-
-			part(channelName);
-		}
-		//message is a private message from a nickname
-		else
-		{
-			//if there is enough parameters part from channel
-			if(parameters.size() >= 2)
-			{
-				//if there is a name of a channel provided part from it other wise send error to nick
-				if(parameters[1][0] == '#' || parameters[1][0] == '&')
-				{
-					part(parameters[1]);
-				}
-				else{
-					message = "No channel provided";
-					sendMsg(message, fromNickname);
-				}
-			}
-			else{
-				message = "No channel provided";
-				sendMsg(message, fromNickname);
-			}
-		}
-	
-	}
-	//authenticate user
-	else if(parameters[0] == "!auth")
+	//add hostname to authHosts vector
+	if(parameters[0] == "!auth")
 	{
 		//if command was sent from a private message from a user
 		if(!fromChannel)
@@ -268,31 +220,176 @@ void ircProto::handle_command(std::string &msg, std::string &fromNickname, std::
 
 			if(parameters.size() >= 2)
 			{
-
 				//if parameters[1] is equal to password then save the users host
-				//in the authUsers vector 
+				//in the authHosts vector 
 				if(parameters[1] == authPass)
 				{
 
-					if( !isAuthenticated(fromNicknameHost) )
+					if( !isAuthed(fromNicknameHost) )
 					{
-
+						std::cout << "authenticated " << fromNickname << std::endl;
 						//add an authenticated user with the timestamp the hostname and the level of authority
 						authHosts.push_back( std::make_tuple( std::time(nullptr), fromNicknameHost, 1) );
-
 					}
 
+				}
+				else
+				{
+					//send back error response
+					sendMsg("error authenticating!", fromNickname);
 				}
 			}
 
 		}
 	}
+	//show authorised nicknames's hostnames
+	else if(parameters[0] == "!showauth")
+	{
+		if(isAuthed(fromNicknameHost))
+		{
+
+			for(auto e = authHosts.begin(); e != authHosts.end(); e++)
+			{	
+				message.append(std::get<1>(*e) + " ");
+			}
+			sendMsg(message, fromNickname);
+		}
+		else
+		{
+			notAuthed(fromNickname);
+		}
+	}
+	else if(parameters[0] == "!unauth")
+	{
+		if(isAuthed(fromNicknameHost))
+		{
+
+			for(auto e = authHosts.begin(); e != authHosts.end(); e++)
+			{
+				if( std::get<1>(*e) == fromNicknameHost)
+				{
+					authHosts.erase(e);
+					break;
+				}
+			}
+
+		}
+		else
+		{
+			sendMsg("you arne't auth'ed anyway you silly bitch.", fromNickname);
+		}
+	}
+	//quit the connection
+	else if(parameters[0] == "!quit")
+	{
+		if(isAuthed(fromNicknameHost))
+		{
+			quit();
+		}
+		else
+		{
+			notAuthed(fromNickname);
+		}
+	}
+	//join a channel
+	else if(parameters[0] == "!join")
+	{
+
+		if(isAuthed(fromNicknameHost))
+		{
+			if(parameters.size() >= 2)
+			{
+
+				join(parameters[1]);
+
+			} 
+			else{
+
+				message = "No channel provided";
+				sendMsg(message, fromNickname);
+			}
+		}
+		else
+		{
+			notAuthed(fromNickname);
+		}
+	}
+	//part from channel
+	else if(parameters[0] == "!part")
+	{
+
+		if(isAuthed(fromNicknameHost))
+		{
+			if(fromChannel)
+			{
+
+				part(channelName);
+			}
+			//message is a private message from a nickname
+			else
+			{
+				//if there is enough parameters part from channel
+				if(parameters.size() >= 2)
+				{
+					//if there is a name of a channel provided part from it other wise send error to nick
+					if(parameters[1][0] == '#' || parameters[1][0] == '&')
+					{
+						part(parameters[1]);
+					}
+					else{
+						message = "No channel provided";
+						sendMsg(message, fromNickname);
+					}
+				}
+				else
+				{
+					message = "No channel provided";
+					sendMsg(message, fromNickname);
+				}
+			}
+		}
+		else
+		{
+			notAuthed(fromNickname);
+		}
+	}
+	else if(parameters[0] == "!nick")
+	{
+
+		if(isAuthed(fromNicknameHost))
+		{
+			if(parameters.size() >= 2)
+			{
+				//makesure username is less than 20 chars
+				if(parameters[1].size() <= 20)
+				{
+					setNick(parameters[1]);
+				}
+				//send the first 20 chars as nick
+				else
+				{
+					setNick(parameters[1].substr(0, 20));
+				}
+			}
+			else
+			{
+				message = "No nickname Provided";
+				sendMsg(message, fromNickname);
+			}
+		}
+		else
+		{
+			notAuthed(fromNickname);
+		}
+	}
+	
+
 
 	//change nickname 
 
 }
 
-void ircProto::split(std::string &mainStr, std::string &&delim, std::vector<std::string> &returnVec)
+void ircProto::split(std::string &mainStr, const std::string &&delim, std::vector<std::string> &returnVec)
 {
 	
 	int delimSize = delim.length();
@@ -337,36 +434,71 @@ void ircProto::pong(std::string &msg)
 }
 
 //checks if users host is in authHosts vector
-bool ircProto::isAuthenticated(std::string& host)
+bool ircProto::isAuthed(const std::string &host)
 {
 
 	if(!host.empty())
 	{
-
 		for(auto e = authHosts.begin(); e != authHosts.end(); e++)
 		{
-			std::cout << std::get<0>(*e) << std::endl;
-			std::cout << std::get<1>(*e) << std::endl;
-			std::cout << std::get<2>(*e) << std::endl;
+			std::cout << "isAuthenticated - " << std::get<1>(*e) << std::endl;
+			if(std::get<1>(*e) == host)
+			{
 
-			return std::get<1>(*e) == host ? true : false;
+				return true;
+			}
 		}
-
 	}
-
+	std::cout << "isnt authenticated !!!! - !!!!" << std::endl;
 	return false;
 
 }
 
-//send msg to recipient NOTE: recipient can be a channel ;)
-void ircProto::sendMsg(std::string &message, std::string &recipient)
+void ircProto::notAuthed(const std::string &nickname)
 {
-	std::cout << "message = " << message << std::endl;
+	sendMsg("you are not authorised to perform this action! kindly fuck off ;)", nickname);
+}
 
+//get nickname from raw msg
+std::string ircProto::getNickname(const std::string &msg)
+{	
+	//:ajaniMember!~ajaniMemb@45.55.137.32 PRIVMSG ##gr33nbot :hello
+	//delimPos =  ^ the character being pointed to in the above text
+	std::size_t delimPos = msg.find('!');
+			
+	return msg.substr(0, delimPos);
+}
+
+//get the hostname from raw msg
+std::string ircProto::getNickHostname(const std::string &msg)
+{
+	//:ajaniMember!~ajaniMemb@45.55.137.32 PRIVMSG ##gr33nbot :hello
+	//delimPos =  ^ the character being pointed to in the above text
+	std::size_t delimPos = msg.find('!');
+
+	return msg.substr(delimPos + 1, msg.find(" "));
+}
+
+//send msg to recipient NOTE: recipient can be a channel ;)
+void ircProto::sendMsg(const std::string &message, const std::string &recipient)
+{
 	std::string msg = "PRIVMSG ";
 	msg.append(recipient);
 	msg.append(" :");
 	msg.append(message);
+
+	std::cout << "full msg = " << msg << std::endl;
+	send(msg);
+}
+
+//send msg to recipient NOTE: recipient can be a channel ;)
+void ircProto::sendMsg(const std::string &&message, const std::string &recipient)
+{
+	std::string msg = "PRIVMSG ";
+	msg.append(recipient);
+	msg.append(" :");
+	msg.append(message);
+
 	std::cout << "full msg = " << msg << std::endl;
 	send(msg);
 }
@@ -379,7 +511,7 @@ void ircProto::sendMsg(std::string &message, std::string &recipient)
 
 
 
-void ircProto::join(std::string &channel)
+void ircProto::join(const std::string &channel)
 {
 
 	std::string msg = "JOIN ";
@@ -389,7 +521,7 @@ void ircProto::join(std::string &channel)
 
 }
 
-void ircProto::part(std::string &channel)
+void ircProto::part(const std::string &channel)
 {
 
 	std::string msg = "PART ";
@@ -402,11 +534,11 @@ void ircProto::part(std::string &channel)
 void ircProto::quit()
 {
 	
-	send("QUIT my bits are tingling something must be wrong!!!");
+	send("QUIT :my bits are tingling something must be wrong!!!");
 
 }
 
-void ircProto::setNick(std::string & nick)
+void ircProto::setNick(const std::string & nick)
 {
 	std::string msg = "NICK ";
 	msg.append(nick);
