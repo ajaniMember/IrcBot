@@ -5,6 +5,7 @@
 #include <tuple>
 #include <vector>
 #include <ctime>
+#include <fstream>
 
 #include "connection.h"
 
@@ -23,13 +24,15 @@ class ircProto : protected connection{
 		std::string authPass;
 
 		//channels to join on connection to server
-		std::vector<std::string> jChannel = {"##gr33nbot"};
+		std::vector<std::string> jChannel = {"##gr33nbot", "#archlinux", "#archlinux-offtopic", "##linux", "#ubuntu", "##c++", "#c++-general", "#c++-basic", "##math", "#ruby"};
 		//buffer that all text is copied to from connection
 		std::string buffer;
 		std::string nick;
 		//character to look for at the begginning of a command
 		char commandPrefix;
 		
+		//log file stream
+		std::ofstream fs;
 
 		//parses the raw message from the server and sends the information to the correct function
 		void handle_raw_msg(std::array<char, 512>, std::string::size_type);

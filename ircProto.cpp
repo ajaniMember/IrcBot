@@ -3,12 +3,15 @@
 #include <tuple>
 #include <sstream>
 #include <ctime>
+#include <fstream>
 
 #include "ircProto.h"
 
-ircProto::ircProto(char * channel, char * port, char * ni) : connection(channel, port), nick(ni), authPass("password1"), commandPrefix('#')
+ircProto::ircProto(char * channel, char * port, char * ni) : connection(channel, port), nick("BillyTheKid"), authPass("password1"), commandPrefix('#')
 {
 	std::cout << "initialized successfully!" << std::endl;
+
+	fs.open("log.txt", std::ios::out | std::ios::app);
 }
 
 /*##################################################################################################################
@@ -99,7 +102,9 @@ void ircProto::handle_raw_msg(std::array<char, 512> buf, std::string::size_type 
 void ircProto::handle_line(std::string line)
 {
 
-	std::cout << line << std::endl;
+	//log message to file
+	fs << line << std::endl;
+	//std::cout << line << std::endl;
 	//if message is a ping send pong
 	if(line[0] == 'P')
 	{
@@ -116,6 +121,9 @@ void ircProto::handle_line(std::string line)
 		std::string fromNickname;
 		std::string fromNicknameHost;
 		std::string empty = "";
+
+		std::string nickserv = "NickServ";
+		std::string message = "";
 
 		std::size_t endprefix = line.find(" :");
 		
@@ -178,7 +186,6 @@ void ircProto::handle_line(std::string line)
 		else if(prefixVector[1] == "QUIT")
 		{
 			fromNicknameHost = getNickHostname(prefixVector[0]);
-			//!!!if hostname is in authHosts vector remove it :D pretty easy
 
 			for(auto e = authHosts.begin(); e != authHosts.end(); e++){
 
@@ -188,16 +195,22 @@ void ircProto::handle_line(std::string line)
 					break;		
 				}
 			}
-			
 		}
 		//end of MOTD
 		else if(prefixVector[1] == "376")
 		{
+
+			sendMsg("IDENTIFY billyTheKidPassword123!", nickserv);
+
 			for(auto i = jChannel.begin(); i != jChannel.end(); i++)
 			{
 
-				join(*i);
+				message.append(*i);
+				message.append(",");
+				//join(*i);
 			}
+
+			join(message);
 		}
 	}
 }
@@ -353,6 +366,7 @@ void ircProto::handle_command(std::string &msg, const std::string &fromNickname,
 			notAuthed(fromNickname);
 		}
 	}
+	//change nickname 
 	else if(parameters[0] == "!nick")
 	{
 
@@ -361,7 +375,7 @@ void ircProto::handle_command(std::string &msg, const std::string &fromNickname,
 			if(parameters.size() >= 2)
 			{
 				//makesure username is less than 20 chars
-				if(parameters[1].size() <= 20)
+				if(parameters[1].length() <= 20)
 				{
 					setNick(parameters[1]);
 				}
@@ -382,11 +396,6 @@ void ircProto::handle_command(std::string &msg, const std::string &fromNickname,
 			notAuthed(fromNickname);
 		}
 	}
-	
-
-
-	//change nickname 
-
 }
 
 void ircProto::split(std::string &mainStr, const std::string &&delim, std::vector<std::string> &returnVec)
@@ -441,7 +450,7 @@ bool ircProto::isAuthed(const std::string &host)
 	{
 		for(auto e = authHosts.begin(); e != authHosts.end(); e++)
 		{
-			std::cout << "isAuthenticated - " << std::get<1>(*e) << std::endl;
+			//std::cout << "isAuthenticated - " << std::get<1>(*e) << std::endl;
 			if(std::get<1>(*e) == host)
 			{
 
@@ -449,7 +458,7 @@ bool ircProto::isAuthed(const std::string &host)
 			}
 		}
 	}
-	std::cout << "isnt authenticated !!!! - !!!!" << std::endl;
+
 	return false;
 
 }
@@ -487,7 +496,7 @@ void ircProto::sendMsg(const std::string &message, const std::string &recipient)
 	msg.append(" :");
 	msg.append(message);
 
-	std::cout << "full msg = " << msg << std::endl;
+	//std::cout << "full msg = " << msg << std::endl;
 	send(msg);
 }
 
@@ -499,7 +508,7 @@ void ircProto::sendMsg(const std::string &&message, const std::string &recipient
 	msg.append(" :");
 	msg.append(message);
 
-	std::cout << "full msg = " << msg << std::endl;
+	//std::cout << "full msg = " << msg << std::endl;
 	send(msg);
 }
 
