@@ -11,8 +11,8 @@ I am doing this to offer a way to easily have alot of different problems that I 
 At the same time this repetition of solving different programing problems will make it easier for me to learn how to go about solving them in a more efficient way.
 
 
-# Requirements
-requirements that need to be complete before I would consider it complete
+# To Do
+Requirements that need to be complete before I would consider it complete
 
     - = not started
     # = started
@@ -25,6 +25,9 @@ requirements that need to be complete before I would consider it complete
     [-] - adding appropriate comments
     [-] - find and post the title of a webpage posted in channels(only works on channels that you setup)
     [-] - More to come
+
+# Requirements
+This project depends on the boost asio library.
 
 #Compilation
 clang++ -std=c++11 ircbot.cpp ircProto.cpp connection.cpp -lboost_system -lboost_thread -lpthread
