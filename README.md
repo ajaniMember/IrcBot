@@ -6,7 +6,7 @@ I am using this project as a usefull tool for me to learn more about c++ and how
 I plan to create other smaller classes that can operate on their own but target a specific problem that I want to solve within the IrcBot. The plan is the more repetition I get with creatings classes to solve different problems the better I will get at it. The end goal is to have a complete IrcBot with th
 
 
-# Requirements
+# Requirements for Completion
 
-Compiling with clang++
-    clang++ -std=c++11 ircbot.cpp ircProto.cpp connection.cpp -lboost_system -lboost_thread -lpthread
+#Compilation
+clang++ -std=c++11 ircbot.cpp ircProto.cpp connection.cpp -lboost_system -lboost_thread -lpthread
