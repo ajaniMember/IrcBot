@@ -3,6 +3,7 @@ IrcBot written in c++.
 
 # Objective
 I am using this project as a usefull tool for me to:
+    
     a) learn more about c++ 
     b) how to solve problems in the most efficient manner both in terms of time and complexity.
 
