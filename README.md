@@ -13,8 +13,11 @@ At the same time this repetition of solving different programing problems will m
 
 # Requirements
 requirements that need to be complete before I would consider it complete
-    - = not started   
+
+    - = not started
+
     # = started
+    
     * = complete
 
     [-] - add error checking to all commands send to server to avoid bugs
