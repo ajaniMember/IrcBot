@@ -15,9 +15,7 @@ At the same time this repetition of solving different programing problems will m
 requirements that need to be complete before I would consider it complete
 
     - = not started
-
     # = started
-    
     * = complete
 
     [-] - add error checking to all commands send to server to avoid bugs
