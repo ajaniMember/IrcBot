@@ -11,35 +11,33 @@ ircProto::ircProto(char * channel, char * port, char * ni) : connection(channel,
 {
 	std::cout << "initialized successfully!" << std::endl;
 
-	fs.open("log.txt", std::ios::out | std::ios::app);
+	log.open("log.txt", std::ios::out | std::ios::app);
 }
 
 /*##################################################################################################################
 											MAIN FUNCTIONS
 ##################################################################################################################*/
 
-void ircProto::run(){
+void ircProto::run()
+{
 
 	try
 	{
-
 		connect();
 
 		std::size_t len;
-			
+
 		std::array<char, 512> buf;
 	 	boost::system::error_code error;
 	 	std::string msg;
 	 	std::vector<std::string> lines;
 
+	 	registerConnection();
 		for(int i = 1;;i++)
 		{
-			
-			//std::cout << i << " - loop" << std::endl;
 			if(i == 3){
 
-				//send info to irc server to register connection
-				registerCon();
+				
 			}
 			
 			len = receive(buf, error);
@@ -66,15 +64,15 @@ void ircProto::run(){
 
 void ircProto::handle_raw_msg(std::array<char, 512> buf, std::string::size_type length)
 {
+
 	//turns the array of char's into a string using the string constructor
-	//to be able to use the string functions to parse the message easier and more efficiently.
-	
 	buffer.append(buf.data(), length);
 	std::size_t pos;
 	std::string line;
 
 	//find the next occurence of crlf
 	pos = buffer.find("\r\n");
+
 
 	while(1){
 
@@ -96,15 +94,14 @@ void ircProto::handle_raw_msg(std::array<char, 512> buf, std::string::size_type 
 		pos = buffer.find("\r\n");
 	}
 
-	//std::cout << buffer << std::endl;
 }
 
 void ircProto::handle_line(std::string line)
 {
 
 	//log message to file
-	fs << line << std::endl;
-	//std::cout << line << std::endl;
+	log << line << std::endl;
+
 	//if message is a ping send pong
 	if(line[0] == 'P')
 	{
@@ -130,17 +127,12 @@ void ircProto::handle_line(std::string line)
 
 		//if there is a prefix and a message body
 		if(endprefix != line.npos){
-			//copy the prefix from the string (everything before the ' :') into the prefix variable
-			//the reason its endprefix+1 is so the whitespace is included so when i am searching for
-			//whitespaces to get the prefix parameters i don't miss the last one :D
 
 			prefixString = line.substr(0, endprefix + 2);
 			line.erase(0, endprefix + 2);
 
 			msgBody = line;
 
-			//print the message body
-			//std::cout << msgBody << std::endl;
 		}
 		else
 		{
@@ -423,7 +415,7 @@ void ircProto::split(std::string &mainStr, const std::string &&delim, std::vecto
 
 }
 
-void ircProto::registerCon()
+void ircProto::registerConnection()
 {
 	setNick(nick);
 
@@ -472,7 +464,7 @@ void ircProto::notAuthed(const std::string &nickname)
 std::string ircProto::getNickname(const std::string &msg)
 {	
 	//:ajaniMember!~ajaniMemb@45.55.137.32 PRIVMSG ##gr33nbot :hello
-	//delimPos =  ^ the character being pointed to in the above text
+	// ^---------^
 	std::size_t delimPos = msg.find('!');
 			
 	return msg.substr(0, delimPos);
@@ -482,7 +474,7 @@ std::string ircProto::getNickname(const std::string &msg)
 std::string ircProto::getNickHostname(const std::string &msg)
 {
 	//:ajaniMember!~ajaniMemb@45.55.137.32 PRIVMSG ##gr33nbot :hello
-	//delimPos =  ^ the character being pointed to in the above text
+	//delimPos =    ^--------------------^
 	std::size_t delimPos = msg.find('!');
 
 	return msg.substr(delimPos + 1, msg.find(" "));
@@ -496,7 +488,7 @@ void ircProto::sendMsg(const std::string &message, const std::string &recipient)
 	msg.append(" :");
 	msg.append(message);
 
-	//std::cout << "full msg = " << msg << std::endl;
+
 	send(msg);
 }
 
@@ -508,7 +500,7 @@ void ircProto::sendMsg(const std::string &&message, const std::string &recipient
 	msg.append(" :");
 	msg.append(message);
 
-	//std::cout << "full msg = " << msg << std::endl;
+
 	send(msg);
 }
 

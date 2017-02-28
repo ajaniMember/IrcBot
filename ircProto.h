@@ -24,21 +24,19 @@ class ircProto : protected connection{
 		std::string authPass;
 
 		//channels to join on connection to server
-		std::vector<std::string> jChannel = {"##gr33nbot", "#archlinux", "#archlinux-offtopic", "##linux", "#ubuntu", "##c++", "#c++-general", "#c++-basic", "##math", "#ruby"};
+		std::vector<std::string> jChannel = {"#archlinux", "#archlinux-offtopic", "##linux", "#ubuntu", "##c++", "#c++-general", "#c++-basic", "##math", "#ruby"};
 		//buffer that all text is copied to from connection
 		std::string buffer;
 		std::string nick;
+
 		//character to look for at the begginning of a command
 		char commandPrefix;
 		
 		//log file stream
-		std::ofstream fs;
+		std::ofstream log;
 
-		//parses the raw message from the server and sends the information to the correct function
 		void handle_raw_msg(std::array<char, 512>, std::string::size_type);
 
-		//parses line and figures out what to do from there
-		// i.e. is there a command? am i just loggin this line? 
 		void handle_line(std::string);
 
 		//when a command has been found this function figures out which one and runs the required code
@@ -47,13 +45,12 @@ class ircProto : protected connection{
 		void split(std::string&, const std::string&&, std::vector<std::string>&); 
 
 		void sendMsg(const std::string&, const std::string&);
-		//overloaded to be able to send messages without it being held in a variable
 		void sendMsg(const std::string&&, const std::string&);
 
 		void pong(std::string&);
 
 		//send authentication data to server to register the connection
-		void registerCon();
+		void registerConnection();
 
 		//checks if users host is in authHosts vector
 		bool isAuthed(const std::string&);

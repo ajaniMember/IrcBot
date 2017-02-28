@@ -29,8 +29,7 @@ class connection
 		boost::asio::ip::tcp::resolver::query query;
 		boost::asio::ip::tcp::resolver::iterator iterator;
 		boost::asio::ip::tcp::socket socket;
-
-
+		
 };
 
 #endif

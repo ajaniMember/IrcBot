@@ -1,4 +1,3 @@
-/* this class deals with socket level connection stuff */
 #include <iostream>
 #include <string>
 #include <boost/asio.hpp>
@@ -7,8 +6,7 @@
 
 using boost::asio::ip::tcp;
 
-connection::connection( char* network, char * port)
-		: resolver(io), query(network, port), iterator(resolver.resolve(query)), socket(io)
+connection::connection( char* network, char * port) : resolver(io), query(network, port), iterator(resolver.resolve(query)), socket(io)
 {
 
 }
@@ -28,7 +26,6 @@ void connection::disconnect()
 std::size_t connection::send(std::string &msg)
 {
 	msg.append("\r\n");
-	//std::cout << "sent - " << msg << std::endl;
 
 	return boost::asio::write(socket, boost::asio::buffer(msg));
 
@@ -37,8 +34,7 @@ std::size_t connection::send(std::string &msg)
 std::size_t connection::send(std::string &&msg)
 {
 	msg.append("\r\n");
-	//std::cout << "sent - " << msg << std::endl;
-	
+
 	return boost::asio::write(socket, boost::asio::buffer(msg));
 
 }
